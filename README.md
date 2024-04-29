@@ -11,6 +11,8 @@ Provide your company name and email (to comply with SEC download guidelines) and
 > python asa.py <company name> <email address> <tickers>
 
 > \>>> python asa.py MyCompany MyName@MyCompany.com AAPL MSFT
+>
+> \>>> Generate reports for AAPL and MSFT.
 
 ------
 
