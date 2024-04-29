@@ -9,7 +9,8 @@ Using a LLM, generate insights from company 10-K filings.
 Provide your company name and email (to comply with SEC download guidelines) and the tickers of the companies you want to analyze.
 
 > python asa.py <company name> <email address> <tickers>
-> python asa.py MyCompany MyName@MyCompany.com AAPL MSFT
+
+> \>>> python asa.py MyCompany MyName@MyCompany.com AAPL MSFT
 
 ------
 
