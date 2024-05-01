@@ -2,8 +2,6 @@
 
 Using a LLM, generate insights from company 10-K filings.
 
-------
-
 ## Use
 
 To comply with SEC download guidelines, all downloaders must have an identifier. Set your EDGAR identity in your environmental variables:
@@ -21,8 +19,6 @@ Run the script. Provide the tickers of the companies you want to analyze:
 > \>>> python asa.py AAPL MSFT
 >
 > \>>> Generate reports for AAPL and MSFT.
-
-------
 
 ## Technical Details
 

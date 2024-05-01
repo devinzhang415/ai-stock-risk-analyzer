@@ -10,7 +10,7 @@ import edgar
 import sys
 from openai import OpenAI
 
-def asa(tickers: list[str]):
+def asa(tickers: list[str]) -> None:
     """
     Using a LLM, generate insights from company 10-K filings.
     Args:
@@ -28,9 +28,18 @@ def asa(tickers: list[str]):
         if company is None:
             print("> Ticker {} is invalid, continuing...".format(ticker))
             continue
-        filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31", is_xbrl=True)
+        print("> Generating report for ticker {}...".format(ticker))
+        filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
+
+        # # Parse through filings year by year
+        # for filing in filings:
+        #     tenk = filing.obj()
+        #     print(tenk["Item 1A"])
+        #     break
+
+    print("> Done.")
 
 if __name__ == "__main__":
     # Parse args
-    tickers = [sys.argv[i] for i in range(1, len(sys.argv))]
+    tickers = sys.argv[1:]
     asa(tickers)
