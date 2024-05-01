@@ -145,7 +145,7 @@ dmypy.json
 cython_debug/
 
 # Filings
-/src/sec-edgar-filings
+/src/chroma_db
 
 # PyCharm
 #  JetBrains specific template is maintainted in a separate JetBrains.gitignore that can
