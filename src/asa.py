@@ -50,7 +50,7 @@ def asa(tickers: list[str]) -> None:
             filing_name = "{} {}".format(ticker, year)
 
             tenk = filing.obj()
-            text = ticker # Default text can not be empty to avoid storing empty string
+            text = ""
 
             # Exception block as internally tenk-type objects call self's HTML,
             # which may be None. However, no error-checking occurs;
@@ -59,11 +59,14 @@ def asa(tickers: list[str]) -> None:
                 # Parse and chunk risk factors
                 risk = tenk["Item 1A"]
                 if risk is None:
-                    risk = ""
+                    continue
                 text += "\n" + risk
             except:
                 None
             
+            if text == "":
+                continue
+
             text_split = splitter.split_text(text)
             
             # Initialize vector database
@@ -79,10 +82,11 @@ def asa(tickers: list[str]) -> None:
         agent = initialize_agent(
             tools=tools,
             llm=llm,
-            verbose=True
+            verbose=False
         )
         question = "How has {}'s risk factors changed over time?".format(ticker)
-        agent({"input": question})
+        answer = agent({"input": question})
+        print(answer["output"])
 
     print("> Done.")
 
