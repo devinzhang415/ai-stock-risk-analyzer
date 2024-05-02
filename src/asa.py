@@ -6,6 +6,7 @@ Usage: python asa.py <company name> <email address> <tickers>
        Tickers should be space-delimited.
 """
 
+import warnings ; warnings.warn = lambda *args,**kwargs: None # Disable deprecation warnings
 import sys
 from edgar import Company
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -24,9 +25,8 @@ def asa(tickers: list[str]) -> None:
     """
     # Gemini LLM
     llm = GoogleGenerativeAI(model="gemini-pro", temperature=0)
-
     # Text chunker and embedder
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     for ticker in tickers:
@@ -38,9 +38,10 @@ def asa(tickers: list[str]) -> None:
             print("> Ticker {} is invalid, continuing...".format(ticker))
             continue
         print("> Generating report for ticker {}...".format(ticker))
-        filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
-        # filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
+        # filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
+        filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
 
+        # Database toolchain
         tools = []
 
         # Parse through filings year by year
@@ -69,7 +70,7 @@ def asa(tickers: list[str]) -> None:
 
             text_split = splitter.split_text(text)
             
-            # Initialize vector database
+            # Append information to toolchain
             retriever = FAISS.from_texts(text_split, embeddings).as_retriever()
             tool = Tool(
                 name=filing_name,
@@ -82,9 +83,16 @@ def asa(tickers: list[str]) -> None:
         agent = initialize_agent(
             tools=tools,
             llm=llm,
-            verbose=False
+            verbose=True
         )
-        question = "How has {}'s risk factors changed over time? Summarize in one paragraph in broad terms; do not give specific years.".format(ticker)
+        # question = """
+        #             Name the risks {} faces by year.
+        #             Be very specific about the risk. For example, instead of "Supply Chain Risks"
+        #             that might be affected by global political and economic conditions and logistics,
+        #             say "Supply Chain Vulnerabilities Pending Global Economic Stability."
+        #             Use the following format: [year risk]
+        #         """.format(ticker)
+        question = "What is a major risk for AAPL?"
         answer = agent({"input": question})
         print(answer["output"])
 
