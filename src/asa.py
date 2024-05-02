@@ -11,7 +11,7 @@ from edgar import Company
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.agents import Tool
+from langchain.agents import Tool, initialize_agent
 from langchain.chains import RetrievalQA
 
 def asa(tickers: list[str]) -> None:
@@ -39,7 +39,7 @@ def asa(tickers: list[str]) -> None:
             continue
         print("> Generating report for ticker {}...".format(ticker))
         filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
-        # filings = company.get_filings(form="10-K", date="1999-01-01:1999-12-31")
+        # filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
 
         tools = []
 
@@ -50,7 +50,7 @@ def asa(tickers: list[str]) -> None:
             filing_name = "{} {}".format(ticker, year)
 
             tenk = filing.obj()
-            text = ""
+            text = ticker # Default text can not be empty to avoid storing empty string
 
             # Exception block as internally tenk-type objects call self's HTML,
             # which may be None. However, no error-checking occurs;
@@ -66,14 +66,23 @@ def asa(tickers: list[str]) -> None:
             
             text_split = splitter.split_text(text)
             
-            # # Initialize vector database
-            # retriever = FAISS.from_texts(risk_split, embeddings).as_retriever()
-            # tool = Tool(
-            #     name=filing_name,
-            #     description="Useful when you want to answer questions about {}".format(filing_name),
-            #     func=RetrievalQA.from_chain_type(llm=llm, retriever=retriever),
-            # )
-            # tools.append(tool)
+            # Initialize vector database
+            retriever = FAISS.from_texts(text_split, embeddings).as_retriever()
+            tool = Tool(
+                name=filing_name,
+                description="Useful when you want to answer questions about {}".format(filing_name),
+                func=RetrievalQA.from_chain_type(llm=llm, retriever=retriever),
+            )
+            tools.append(tool)
+
+        # Query database
+        agent = initialize_agent(
+            tools=tools,
+            llm=llm,
+            verbose=True
+        )
+        question = "How has {}'s risk factors changed over time?".format(ticker)
+        agent({"input": question})
 
     print("> Done.")
 
