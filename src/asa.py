@@ -84,7 +84,7 @@ def asa(tickers: list[str]) -> None:
             llm=llm,
             verbose=False
         )
-        question = "How has {}'s risk factors changed over time?".format(ticker)
+        question = "How has {}'s risk factors changed over time? Summarize in one paragraph in broad terms; do not give specific years.".format(ticker)
         answer = agent({"input": question})
         print(answer["output"])
 

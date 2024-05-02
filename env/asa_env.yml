@@ -1,0 +1,11 @@
+name: asa_env
+channels:
+    - defaults
+dependencies:
+    - python=3.11
+    - pip
+    - pip:
+        - edgartools==2.20.0
+        - langchain-text-splitters==0.0.1
+        - faiss-cp==1.8.0
+        - langchain-google-genai==1.0.3
