@@ -11,99 +11,155 @@ import altair as alt
 import re
 import io
 
-def risks_to_df(risks: str) -> dict[str, pd.DataFrame]:
+def risks_to_df(risks_dict: dict[str, str]) -> pd.DataFrame:
     """
     Parse LLM risk assessment into a Pandas dataframe.
     Args:
-        risks: risk assessment for a given company. Formatted like
+        risks_dict: risk assessment for a given company. Keyed by year. Entries are formatted like
 
+        >>> risks["2023"]
         >>>
-            **1995:**
+            **AAPL 2023 Risk Report Summary**
 
-            * **Economic downturn:** [Likelihood: 0.5, Impact: 0.7]
-            * **Competition from new entrants:** [Likelihood: 0.6, Impact: 0.8]
+            **Risk 1: Supply Chain Disruptions**
 
-            **2000:**
+            * **Likelihood:** 0.8 (High)
+            * **Impact:** 0.9 (Severe)
+            * **Description:** Global supply chain disruptions, including component shortages, transportation delays, and geopolitical tensions, could impact Apple's production and delivery timelines.
 
-            * **Dot-com bubble burst:** [Likelihood: 0.7, Impact: 0.9]
-            * **9/11 terrorist attacks:** [Likelihood: 0.2, Impact: 0.8]
+            **Risk 2: Economic Downturn**
+
+            * **Likelihood:** 0.6 (Moderate)
+            * **Impact:** 0.7 (Significant)
+            * **Description:** A global economic downturn could reduce consumer spending on Apple products, particularly in discretionary categories.
             ...
     Return:
-        Dictionary of pandas dataframe of risk factors, keyed by year.
+        Pandas dataframe of risk factors, with columns year, risk, likelihood, and impact.
     """
-    dfs = {}
+    risk_pattern = r"\*\*Risk \d+:\s*(.*)\*\*"
+    likelihood_pattern = r"\* \*\*Likelihood:\*\* (.*) \(\S+\)"
+    impact_pattern = r"\* \*\*Impact:\*\* (.*) \(\S+\)"
 
-    # Define the regex patterns to extract year and entries
-    year_pattern = r"\*\*(\d+):"
-    entry_pattern = r"\*\*\s*([^*]+?)\s*:\*\*\s*\[Likelihood:\s*([\d.]+),\s*Impact:\s*([\d.]+)\]"
+    risk_str = "Year,Risk,Likelihood,Impact"
+    for year, lines in risks_dict.items():
+        lines = re.split("\n+", lines.strip())[1:]
+        for i in range(0, len(lines), 4):
+            risk = re.findall(risk_pattern, lines[i])[0]
+            likelihood = re.findall(likelihood_pattern, lines[i + 1])[0]
+            impact = re.findall(impact_pattern, lines[i + 2])[0]
+            risk_str += "\n{},{},{},{}".format(year, risk, likelihood, impact)
 
-    # Find all matches for year and entries
-    years = re.findall(year_pattern, risks)
-    entries = re.findall(entry_pattern, risks)
+    string_data = io.StringIO(risk_str)
+    df = pd.read_csv(string_data, sep=",")
+    print(df)
 
-    for year in years:
-        None
+risks_dict = {
+"2023":
+"""
+**AAPL 2023 Risk Report Summary**
 
+**Risk 1: Supply Chain Disruptions**
 
-    # curr_year = "" # Current year to assign risks to
-    # lines = risks.strip().split("\n")
-    # for line in lines:
+* **Likelihood:** 0.8 (High)
+* **Impact:** 0.9 (Severe)
+* **Description:** Global supply chain disruptions, including component shortages, transportation delays, and geopolitical tensions, could impact Apple's production and delivery timelines.
 
-    #     # Year lines start with "**" and ends with ":**"
-    #     if line.startswith("**") and line.endswith(":**"):
-    #         curr_year = line[2:][:-3]
-    #         if curr_year not in dfs:
-    #             dfs[curr_year] = "Risk;Likelihood;Impact"
+**Risk 2: Economic Downturn**
 
-    #     # Risk lines start with "* **"
-    #     elif line.startswith("* **"):
-    #         None
+* **Likelihood:** 0.6 (Moderate)
+* **Impact:** 0.7 (Significant)
+* **Description:** A global economic downturn could reduce consumer spending on Apple products, particularly in discretionary categories.
 
-    # # Convert risk strings to dataframes
-    # for year, risk_str in dfs:
-    #     string_data = io.StringIO(risk_str)
-    #     df = pd.read_csv(string_data, sep=";")
-    #     dfs[year] = df
+**Risk 3: Regulatory Scrutiny**
 
-    return dfs
+* **Likelihood:** 0.7 (Moderate)
+* **Impact:** 0.8 (High)
+* **Description:** Increased regulatory scrutiny, including antitrust investigations and privacy concerns, could lead to fines, penalties, or changes in business practices.
 
-risks = """
-**1995:**
+**Risk 4: Cybersecurity Threats**
 
-* **Economic downturn:** [Likelihood: 0.5, Impact: 0.7]
-* **Competition from new entrants:** [Likelihood: 0.6, Impact: 0.8]
+* **Likelihood:** 0.9 (High)
+* **Impact:** 0.9 (Severe)
+* **Description:** Cyberattacks, data breaches, and ransomware attacks could compromise Apple's systems, customer data, and reputation.
 
-**2000:**
+**Risk 5: Competition**
 
-* **Dot-com bubble burst:** [Likelihood: 0.7, Impact: 0.9]
-* **9/11 terrorist attacks:** [Likelihood: 0.2, Impact: 0.8]
+* **Likelihood:** 0.7 (Moderate)
+* **Impact:** 0.6 (Moderate)
+* **Description:** Increased competition from both established and emerging players in the smartphone, tablet, and wearable markets could erode Apple's market share.
 
-**2005:**
+**Risk 6: Product Defects**
 
-* **Housing market crash:** [Likelihood: 0.6, Impact: 0.8]
-* **Rise of social media:** [Likelihood: 0.8, Impact: 0.7]
+* **Likelihood:** 0.5 (Low)
+* **Impact:** 0.7 (Significant)
+* **Description:** Product defects or recalls could damage Apple's reputation and lead to financial losses.
 
-**2010:**
+**Risk 7: Environmental Concerns**
 
-* **Global financial crisis:** [Likelihood: 0.7, Impact: 0.9]
-* **Increased regulation:** [Likelihood: 0.6, Impact: 0.7]
+* **Likelihood:** 0.6 (Moderate)
+* **Impact:** 0.6 (Moderate)
+* **Description:** Growing environmental concerns and regulations could increase Apple's costs and impact its supply chain.
 
-**2015:**
+**Risk 8: Employee Relations**
 
-* **Brexit:** [Likelihood: 0.4, Impact: 0.6]
-* **Cybersecurity threats:** [Likelihood: 0.8, Impact: 0.8]
+* **Likelihood:** 0.4 (Low)
+* **Impact:** 0.5 (Moderate)
+* **Description:** Labor disputes, unionization efforts, or employee dissatisfaction could disrupt operations and damage Apple's reputation.
+""",
+"2022":
+"""
+**AAPL 2022 Risk Report Summary**
 
-**2020:**
+**Risk 1: Supply Chain Disruptions**
 
-* **COVID-19 pandemic:** [Likelihood: 0.9, Impact: 0.9]
-* **Supply chain disruptions:** [Likelihood: 0.7, Impact: 0.8]
+* **Likelihood:** 0.8 (High)
+* **Impact:** 0.9 (Severe)
+* **Description:** Global supply chain disruptions, including component shortages, transportation delays, and geopolitical tensions, could impact Apple's production and delivery timelines.
 
-**2023:**
+**Risk 2: Economic Downturn**
 
-* **Economic recession:** [Likelihood: 0.6, Impact: 0.8]
-* **Climate change:** [Likelihood: 0.7, Impact: 0.9]
-        """
-risks_to_df(risks)
+* **Likelihood:** 0.6 (Moderate)
+* **Impact:** 0.7 (Significant)
+* **Description:** A global economic downturn could reduce consumer spending on Apple products, particularly in discretionary categories.
+
+**Risk 3: Regulatory Scrutiny**
+
+* **Likelihood:** 0.7 (Moderate)
+* **Impact:** 0.8 (High)
+* **Description:** Increased regulatory scrutiny, including antitrust investigations and privacy concerns, could lead to fines, penalties, or changes in business practices.
+
+**Risk 4: Cybersecurity Threats**
+
+* **Likelihood:** 0.9 (High)
+* **Impact:** 0.9 (Severe)
+* **Description:** Cyberattacks, data breaches, and ransomware attacks could compromise Apple's systems, customer data, and reputation.
+
+**Risk 5: Competition**
+
+* **Likelihood:** 0.7 (Moderate)
+* **Impact:** 0.6 (Moderate)
+* **Description:** Increased competition from both established and emerging players in the smartphone, tablet, and wearable markets could erode Apple's market share.
+
+**Risk 6: Product Defects**
+
+* **Likelihood:** 0.5 (Low)
+* **Impact:** 0.7 (Significant)
+* **Description:** Product defects or recalls could damage Apple's reputation and lead to financial losses.
+
+**Risk 7: Environmental Concerns**
+
+* **Likelihood:** 0.6 (Moderate)
+* **Impact:** 0.6 (Moderate)
+* **Description:** Growing environmental concerns and regulations could increase Apple's costs and impact its supply chain.
+
+**Risk 8: Employee Relations**
+
+* **Likelihood:** 0.4 (Low)
+* **Impact:** 0.5 (Moderate)
+* **Description:** Labor disputes, unionization efforts, or employee dissatisfaction could disrupt operations and damage Apple's reputation.
+"""
+}
+risks_to_df(risks_dict)
 
 # @st.cache_data
 # def get_UN_data():

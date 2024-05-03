@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Using a LLM, generate insights from company 10-K filings.
+Using a LLM, generate risk insights from company 10-K filings.
 
 Usage: python asra.py <tickers>
        Tickers should be space-delimited.
@@ -17,7 +17,7 @@ from langchain.chains import RetrievalQA
 
 def asra(tickers: list[str]) -> None:
     """
-    Using a LLM, generate insights from company 10-K filings.
+    Using a LLM, generate risk insights from company 10-K filings.
     Args:
         tickers: list of stock tickers to analyze.
     Return:
