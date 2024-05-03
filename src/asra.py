@@ -2,7 +2,7 @@
 """
 Using a LLM, generate insights from company 10-K filings.
 
-Usage: python asa.py <company name> <email address> <tickers>
+Usage: python asra.py <tickers>
        Tickers should be space-delimited.
 """
 
@@ -15,7 +15,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.agents import Tool, AgentType, initialize_agent
 from langchain.chains import RetrievalQA
 
-def asa(tickers: list[str]) -> None:
+def asra(tickers: list[str]) -> None:
     """
     Using a LLM, generate insights from company 10-K filings.
     Args:
@@ -39,8 +39,7 @@ def asa(tickers: list[str]) -> None:
             print("> Ticker {} is invalid, continuing...".format(ticker))
             continue
         print("> Generating report for ticker {}...".format(ticker))
-        # filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
-        filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
+        filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
 
         # Parse through filings year by year
         for filing in filings:
@@ -100,4 +99,4 @@ def asa(tickers: list[str]) -> None:
 if __name__ == "__main__":
     # Parse args
     tickers = sys.argv[1:]
-    asa(tickers)
+    asra(tickers)
