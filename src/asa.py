@@ -20,7 +20,7 @@ def asa(tickers: list[str]) -> None:
     Using a LLM, generate insights from company 10-K filings.
     Args:
         tickers: list of stock tickers to analyze.
-    Returns:
+    Return:
         None
     """
     # Gemini LLM
@@ -40,10 +40,7 @@ def asa(tickers: list[str]) -> None:
             continue
         print("> Generating report for ticker {}...".format(ticker))
         # filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
-        filings = company.get_filings(form="10-K", date="2010-01-01:2023-12-31")
-
-        # Database toolchain
-        tools = []
+        filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
 
         # Parse through filings year by year
         for filing in filings:
@@ -54,8 +51,6 @@ def asa(tickers: list[str]) -> None:
             # Get filing text
             tenk = filing.obj()
             text = ""
-
-            risk = tenk["Item 1A"]
 
             # Exception block as internally tenk-type objects call self's HTML,
             # which may be None. However, no error-checking occurs;
@@ -75,35 +70,30 @@ def asa(tickers: list[str]) -> None:
             # Chunk text
             text_split = splitter.split_text(text)
             
-            # Append chunks to toolchain
+            # Form database
             retriever = FAISS.from_texts(text_split, embeddings).as_retriever()
             tool = Tool(
-                name=filing_name,
-                description="Useful when you want to answer questions about {}".format(filing_name),
+                name="{} Risk Report".format(filing_name),
+                description="Useful when you want to answer questions about the risks {} faces in {}".format(ticker, year),
                 func=RetrievalQA.from_chain_type(llm=llm, retriever=retriever),
             )
-            tools.append(tool)
 
-        # Query database
-        # Despite being optimized for OpenAI, a multi function agent is still speedy for other models
-        agent = initialize_agent(
-            agent=AgentType.OPENAI_MULTI_FUNCTIONS,
-            tools=tools,
-            llm=llm,
-            verbose=False,
-            max_execution_time=600
-        )
-        question = """
-                    Summarize the risks the company faces from 1995 to 2023 into a few points.
-                    Score each risk by how likely it is to happen, and the impact it has on a scale between 0 and 1.
-                    For example:
-                    2023: Example [likelihood impact]
-                    2022: Example [likelihood impact], Example [likelihood impact]
-                    ...
-                   """
-        # question = "Summarize the risks the company has for each year. Name each risk in one phrase."
-        answer = agent({"input": question})
-        print(answer["output"])
+            # Query database
+            # Despite being optimized for OpenAI, a multi function agent is still speedy for other models
+            agent = initialize_agent(
+                agent=AgentType.OPENAI_MULTI_FUNCTIONS,
+                tools=[tool],
+                llm=llm,
+                verbose=False,
+                max_execution_time=600
+            )
+            question = """
+                        Summarize the {} Risk Report.
+                        Score each risk by how likely it is to happen, and the impact it has.
+                        Score on a scale between 0 and 1.
+                    """.format(filing_name)
+            answer = agent({"input": question})
+            print(answer["output"])
 
     print("> Done.")
 
