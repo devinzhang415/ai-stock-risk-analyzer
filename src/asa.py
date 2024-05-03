@@ -12,7 +12,7 @@ from edgar import Company
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.agents import Tool, initialize_agent
+from langchain.agents import Tool, AgentType, initialize_agent
 from langchain.chains import RetrievalQA
 
 def asa(tickers: list[str]) -> None:
@@ -25,8 +25,9 @@ def asa(tickers: list[str]) -> None:
     """
     # Gemini LLM
     llm = GoogleGenerativeAI(model="gemini-pro", temperature=0)
+
     # Text chunker and embedder
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     for ticker in tickers:
@@ -39,7 +40,7 @@ def asa(tickers: list[str]) -> None:
             continue
         print("> Generating report for ticker {}...".format(ticker))
         # filings = company.get_filings(form="10-K", date="1995-01-01:2023-12-31")
-        filings = company.get_filings(form="10-K", date="2020-01-01:2023-12-31")
+        filings = company.get_filings(form="10-K", date="2010-01-01:2023-12-31")
 
         # Database toolchain
         tools = []
@@ -50,8 +51,11 @@ def asa(tickers: list[str]) -> None:
             year = str(filing.filing_date.year)
             filing_name = "{} {}".format(ticker, year)
 
+            # Get filing text
             tenk = filing.obj()
             text = ""
+
+            risk = tenk["Item 1A"]
 
             # Exception block as internally tenk-type objects call self's HTML,
             # which may be None. However, no error-checking occurs;
@@ -68,9 +72,10 @@ def asa(tickers: list[str]) -> None:
             if text == "":
                 continue
 
+            # Chunk text
             text_split = splitter.split_text(text)
             
-            # Append information to toolchain
+            # Append chunks to toolchain
             retriever = FAISS.from_texts(text_split, embeddings).as_retriever()
             tool = Tool(
                 name=filing_name,
@@ -80,19 +85,23 @@ def asa(tickers: list[str]) -> None:
             tools.append(tool)
 
         # Query database
+        # Despite being optimized for OpenAI, a multi function agent is still speedy for other models
         agent = initialize_agent(
+            agent=AgentType.OPENAI_MULTI_FUNCTIONS,
             tools=tools,
             llm=llm,
-            verbose=True
+            verbose=False,
+            max_execution_time=600
         )
-        # question = """
-        #             Name the risks {} faces by year.
-        #             Be very specific about the risk. For example, instead of "Supply Chain Risks"
-        #             that might be affected by global political and economic conditions and logistics,
-        #             say "Supply Chain Vulnerabilities Pending Global Economic Stability."
-        #             Use the following format: [year risk]
-        #         """.format(ticker)
-        question = "What is a major risk for AAPL?"
+        question = """
+                    Summarize the risks the company faces from 1995 to 2023 into a few points.
+                    Score each risk by how likely it is to happen, and the impact it has on a scale between 0 and 1.
+                    For example:
+                    2023: Example [likelihood impact]
+                    2022: Example [likelihood impact], Example [likelihood impact]
+                    ...
+                   """
+        # question = "Summarize the risks the company has for each year. Name each risk in one phrase."
         answer = agent({"input": question})
         print(answer["output"])
 
