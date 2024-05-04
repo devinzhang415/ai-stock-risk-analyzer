@@ -16,6 +16,8 @@ Run the app.
 
 > streamlit run app.py
 
+![Demo](./imgs/demo.png)
+
 ## Technical Details
 
 [edgartools](https://pypi.org/project/edgartools/) downloads company 10-K filings from the SEC EDGAR database. All filings between 1995 and 2023 (roughly 29 documents) will be downloaded.
