@@ -6,57 +6,46 @@ Usage: streamlit run app.py
 """
 
 import streamlit as st
-import altair as alt
 import asra
+import plotly.express as px
 
 def main():
     st.title('AI Stock Risk Analyzer')
+    st.markdown(
+        """
+        Parse company 10-K filings and utilize LLMs to analyze company risks.
+        """)
 
-    ticker = st.text_input("Input Ticker", placeholder="AAPL", )
+    # Select ticker and year
+    ticker = st.text_input("Input Ticker", placeholder="AAPL")
+    # ticker = st.selectbox('Choose Ticker', ["AAPL", "TSLA", "GME"])
+    year = st.slider("Year", 1995, 2023)
 
     try:
+        # Load ticker risk dataframe
         risks_df = asra.get_risks_df(ticker)
-        st.dataframe(risks_df, hide_index=True, use_container_width=True)
+        if risks_df is None:
+            risks_df = "" # String input to st.dataframe throws error, triggering Exception screen
+        year_risks_df = risks_df[risks_df["Year"] == str(year)]
+        st.dataframe(year_risks_df, hide_index=True, use_container_width=True)
+
+        # Plot dataframe
+        fig = px.scatter(
+            year_risks_df,
+            x="Impact",
+            y="Likelihood",
+            text="Risk",
+            color="Impact",
+            color_continuous_scale=[(0, "green"), (0.3, "yellow"), (1, "red")]
+        )
+        fig.update_layout(font=dict(size=8))
+        fig.update_traces(textposition='top center')
+        fig.update_xaxes(range=[0, 1])
+        fig.update_yaxes(range=[0, 1])
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
     except:
-        st.markdown("Please input a ticker.")
-
-
-
-
-    # @st.cache_data
-    # def get_UN_data():
-    #     AWS_BUCKET_URL = "https://streamlit-demo-data.s3-us-west-2.amazonaws.com"
-    #     df = pd.read_csv(AWS_BUCKET_URL + "/agri.csv.gz")
-    #     return df.set_index("Region")
-
-    # try:
-    #     df = get_UN_data()
-    #     countries = st.multiselect(
-    #         "Choose countries", list(df.index), ["China", "United States of America"]
-    #     )
-    #     if not countries:
-    #         st.error("Please select at least one country.")
-    #     else:
-    #         data = df.loc[countries]
-    #         data /= 1000000.0
-    #         st.write("### Gross Agricultural Production ($B)", data.sort_index())
-
-    #         data = data.T.reset_index()
-    #         data = pd.melt(data, id_vars=["index"]).rename(
-    #             columns={"index": "year", "value": "Gross Agricultural Product ($B)"}
-    #         )
-    #         chart = (
-    #             alt.Chart(data)
-    #             .mark_area(opacity=0.3)
-    #             .encode(
-    #                 x="year:T",
-    #                 y=alt.Y("Gross Agricultural Product ($B):Q", stack=None),
-    #                 color="Region:N",
-    #             )
-    #         )
-    #         st.altair_chart(chart, use_container_width=True)
-    # except:
-    #     None
+        st.markdown("Please input a valid ticker.")
 
 if __name__ == "__main__":
     main()

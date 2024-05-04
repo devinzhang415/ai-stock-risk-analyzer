@@ -16,6 +16,7 @@ from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddi
 from langchain_community.vectorstores import FAISS
 from langchain.agents import Tool, AgentType, initialize_agent
 from langchain.chains import RetrievalQA
+import streamlit as st
 
 def get_risks(ticker: str) -> dict[str, str]:
     """
@@ -161,8 +162,12 @@ def risks_to_df(risks_dict: dict[str, str]) -> pd.DataFrame:
     string_data = io.StringIO(risk_str)
     df = pd.read_csv(string_data, sep=";")
 
+    # Format Year column as string
+    df["Year"] = df["Year"].astype(str)
+
     return df
 
+@st.cache_data
 def get_risks_df(ticker: str) -> pd.DataFrame:
     """
     Get company risk assessment as a dataframe.
@@ -175,21 +180,6 @@ def get_risks_df(ticker: str) -> pd.DataFrame:
     risks_dict = get_risks(ticker)
     if risks_dict is None:
         return None
-    # risks_dict = {
-    # "2023": """**AAPL 2023 Risk Report Summary**
-
-    #         **Risk 1: Supply Chain Disruptions**
-
-    #         * **Likelihood:** 0.8 (High)
-    #         * **Impact:** 0.9 (Very Severe)
-    #         * **Description:** Global supply chain disruptions, including component shortages, transportation delays, and geopolitical tensions, could impact Apple's production and delivery timelines.
-
-    #         **Risk 2: Economic Downturn**
-
-    #         * **Likelihood:** 1
-    #         * **Impact:** 0.7 (Significant)
-    #         * **Description:** A global economic downturn could reduce consumer spending on Apple products, particularly in discretionary categories."""
-    # }
     risks_df = risks_to_df(risks_dict)
     return risks_df
 
