@@ -39,8 +39,8 @@ def risks_to_df(risks_dict: dict[str, str]) -> pd.DataFrame:
     """
     # Regex patterns for finding risk, likelihood, and impact
     risk_pattern = r"\*\*Risk \d+:\s*(.*)\*\*"
-    likelihood_pattern = r"\* \*\*Likelihood:\*\* (\d\.\d+)"
-    impact_pattern = r"\* \*\*Impact:\*\* (\d\.\d+)"
+    likelihood_pattern = r"\* \*\*Likelihood:\*\* (\d\.\d+|\d)"
+    impact_pattern = r"\* \*\*Impact:\*\* (\d\.\d+|\d)"
 
     # Match each line and parse the data
     risk_str = "Year;Risk;Likelihood;Impact"
@@ -71,7 +71,7 @@ print(risks_to_df(asra(["GME"])))
 
 #             **Risk 2: Economic Downturn**
 
-#             * **Likelihood:** 0.6
+#             * **Likelihood:** 1
 #             * **Impact:** 0.7 (Significant)
 #             * **Description:** A global economic downturn could reduce consumer spending on Apple products, particularly in discretionary categories."""
 # }

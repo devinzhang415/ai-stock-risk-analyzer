@@ -102,6 +102,5 @@ def asra(tickers: list[str]) -> dict[str, str]:
     return risks_dict
 
 if __name__ == "__main__":
-    # Parse args
-    tickers = sys.argv[1:]
+    tickers = sys.argv[1:] # Parse args
     asra(tickers)
