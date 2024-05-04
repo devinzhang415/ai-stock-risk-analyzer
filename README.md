@@ -12,13 +12,9 @@ Create an [Gemini API key](https://aistudio.google.com/app/apikey). Set your API
 
 > setx GOOGLE_API_KEY "\<your key>"
 
-Run the script. Provide the tickers of the companies you want to analyze:
+Run the app.
 
-> python asa.py \<tickers>
-
-> \>>> python asa.py AAPL MSFT
->
-> \>>> Generate reports for AAPL and MSFT.
+> streamlit run app.py
 
 ## Technical Details
 

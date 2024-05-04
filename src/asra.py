@@ -15,14 +15,16 @@ from langchain_community.vectorstores import FAISS
 from langchain.agents import Tool, AgentType, initialize_agent
 from langchain.chains import RetrievalQA
 
-def asra(tickers: list[str]) -> None:
+def asra(tickers: list[str]) -> dict[str, str]:
     """
     Using a LLM, generate risk insights from company 10-K filings.
     Args:
         tickers: list of stock tickers to analyze.
     Return:
-        None
+        Dictionary keyed by year to risk insights for the given year.
     """
+    risks_dict = {}
+
     # Gemini LLM
     llm = GoogleGenerativeAI(model="gemini-pro", temperature=0)
 
@@ -91,10 +93,13 @@ def asra(tickers: list[str]) -> None:
                         Score each risk by how likely it is to happen, and the impact it has.
                         Score on a scale between 0 and 1.
                     """.format(filing_name)
-            answer = agent({"input": question})
-            print(answer["output"])
+            answer = agent({"input": question})["output"]
+            print(answer)
+
+            risks_dict[year] = answer
 
     print("> Done.")
+    return risks_dict
 
 if __name__ == "__main__":
     # Parse args
