@@ -10,15 +10,11 @@ import asra
 import plotly.express as px
 
 def main():
-    st.title('AI Stock Risk Analyzer')
-    st.markdown(
-        """
-        Parse company 10-K filings and utilize LLMs to analyze company risks.
-        """)
+    st.title("AI Stock Risk Analyzer")
+    st.markdown("Parse company 10-K filings and utilize LLMs to analyze company risks.")
 
     # Select ticker and year
     ticker = st.text_input("Input Ticker", placeholder="AAPL")
-    # ticker = st.selectbox('Choose Ticker', ["AAPL", "TSLA", "GME"])
     year = st.slider("Year", 1995, 2023)
 
     try:
